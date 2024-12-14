@@ -2,6 +2,10 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 
+export function purifyWord(query) {
+    return query.replace(/[^a-z]/gi, "");
+}
+
 export function cn(...inputs) {
 	return twMerge(clsx(inputs));
 }

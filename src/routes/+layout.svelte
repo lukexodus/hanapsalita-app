@@ -1,83 +1,296 @@
 <script>
 	import '../app.css';
 
-	import { fade, fly } from "svelte/transition";
+	// shadcn imports
 
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Tabs from "$lib/components/ui/tabs/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
+	import { Description } from '@/ui/alert';
+	import { Toaster } from "$lib/components/ui/sonner";
+	import { toast } from "svelte-sonner";
+
+	// svc imports
 
 	import SearchIcon from "$lib/icons/search-icon.svelte";
 	import CloseIcon from "$lib/icons/close-icon.svelte"
 
+	// Custom-made components
+
 	import PopButton from "$lib/components/pop-button.svelte"
+	import InputErrorMessage from '@/input-error-message.svelte';
+
+	// Svelte imports
+
+	import { untrack } from 'svelte';
+	import { fade, fly } from "svelte/transition";
+	import { goto } from '$app/navigation';
+	import Page from './+page.svelte';
+
+	// Props
 
 	let { children } = $props();
 
-	let mode = $state('by-parts');
+	// UI States
 
+	let mode = $state('search-by-parts');
 	let showSearchBar = $state(false);
+	let withResponse = $state(false)
+
+	// Input bound values
+
+	let startsWith = $state("");
+	let contains = $state("");
+	let endsIn = $state("");
+
+	let scrambledLetters = $state("");
+
+	let wordWithMissingLetters = $state("");
+
+	// Go to the relevant page based on the mode/tool
+	$effect(() => {
+		goto(`/${mode}`)
+	})
+
+	// Validate search by parts input
+
+	function validateInput(letters) {  // Validation function
+		let valid = true;
+		let errorCode = 0;
+
+		// 1 - Contains spaces
+		// 2 - Contains invalid chars
+		
+		// Regular expression to match characters other than alphas, apostrophes, and hyphens
+		const invalidCharPattern = /[^a-zA-Z'-]/;
+
+		if (letters.includes(" ")) {
+			valid = false
+			errorCode = 1
+		}
+		else if (invalidCharPattern.test(letters)) {
+			valid = false
+			errorCode = 2
+		}
+
+		return {
+			valid, errorCode
+		}
+	}
+
+	let startsWithValid = $state(true);
+	let startsWithErrorCode = $state(0)
+	let containsValid = $state(true);
+	let containsErrorCode = $state(0)
+	let endsInValid = $state(true);
+	let endsInErrorCode = $state(0)
+
+	let scrambledValid = $state(true);
+	let scrambledErrorCode = $state(0);
+
+	let wordWithMissingValid = $state(true);
+	let wordWithMissingErrorCode = $state(0);
+
+	// Submit functinos
+
+	function submitSearchByParts() {
+		// Validate inputs
+		if (startsWith) {
+			const { valid, errorCode } = validateInput(startsWith);
+			startsWithValid = valid;
+			startsWithErrorCode = errorCode;
+
+			if (!startsWithValid) {
+				return
+			}
+		}
+		if (contains) {
+			const { valid, errorCode } = validateInput(contains);
+			containsValid = valid;
+			containsErrorCode = errorCode;
+
+			if (!containsValid) {
+				return
+			}
+		}
+		if (endsIn) {
+			const { valid, errorCode } = validateInput(endsIn);
+			endsInValid = valid;
+			endsInErrorCode = errorCode;
+
+			if (!endsInValid) {
+				return
+			}
+		}
+
+		if (!startsWith && !contains && !endsIn) {
+			toast.warning("All inputs are empty.")
+		}
+
+		// Submit data
+
+		const paramsObject = {};
+		if (startsWith) {
+			paramsObject.startsWith = startsWith;
+		}
+		if (contains) {
+			paramsObject.contains = contains;
+		}
+		if (endsIn) {
+			paramsObject.endsIn = endsIn;
+		}
+		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
+
+		console.log('/search-by-parts?' + paramsPart)
+
+		showSearchBar = false;
+		withResponse = true;
+		goto('/search-by-parts?' + paramsPart);
+	}
+
+	function submitUnscramble() {
+		if (scrambledLetters) {
+			const { valid, errorCode } = validateInput(scrambledLetters);
+			scrambledValid = valid;
+			scrambledErrorCode = errorCode;
+
+			if (!scrambledValid) {
+				return;
+			}
+		} else {
+			toast.warning("Input is empty.");
+			return;
+		}
+
+		const paramsObject = { input: scrambledLetters };
+		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
+
+		showSearchBar = false;
+		withResponse = true;
+		goto('/unscramble?' + paramsPart);
+	}
+
+	function submitWordWithMissingLetters() {
+		if (wordWithMissingLetters) {
+			const { valid, errorCode } = validateInput(wordWithMissingLetters);
+			wordWithMissingValid = valid;
+			wordsWithMissingErrorCode = errorCode;
+
+			if (!wordWithMissingValid) {
+				return;
+			}
+		} else {
+			toast.warning("Input is empty.");
+			return;
+		}
+
+		const paramsObject = { input: wordWithMissingLetters };
+		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
+
+		showSearchBar = false;
+		withResponse = true;
+		goto('/find-missing-letters?' + paramsPart);
+	}
 </script>
 
 <div class="w-screen h-screen relative">
+	<!-- md:right-40 lg:right-56 xl:right-96 -->
 	<PopButton hide={showSearchBar} className="fixed top-2 right-2" onclick={() => showSearchBar = true}><SearchIcon /></PopButton>
-	{#if showSearchBar}
-	<div class="w-[425px] absolute top-2 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-in-out"
+{#if showSearchBar}
+	<div 
+	class="w-full sm:w-[425px] absolute top-2 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-in-out z-20"
 	in:fly={{ duration: 500, y: -500, opacity: 0 }}
 	out:fly={{ duration: 500, y: -500, opacity: 0 }}>
 	<Tabs.Root bind:value={mode} class="w-full">
 		<Tabs.List class="grid w-full grid-cols-3">
-		  <Tabs.Trigger value="by-parts">Search By Parts</Tabs.Trigger>
+		  <Tabs.Trigger value="search-by-parts">Search By Parts</Tabs.Trigger>
 		  <Tabs.Trigger value="unscramble">Unscramble</Tabs.Trigger>
-		  <Tabs.Trigger value="missing-letter">Find Missing Letters</Tabs.Trigger>
+		  <Tabs.Trigger value="find-missing-letters">Find Missing Letters</Tabs.Trigger>
 		</Tabs.List>
-		<Tabs.Content value="by-parts">
+		<Tabs.Content value="search-by-parts">
 		  <Card.Root>
 			<Card.Header>
 			  <Card.Title>Find Tagalog words that...</Card.Title>
 			</Card.Header>
 			<Card.Content class="space-y-2">
 			  <div class="space-y-1">
-				<Label for="start-with">Start With</Label>
-				<Input id="start-with" value="" />
+				<Label for="start-with">Starts With</Label>
+				<Input id="start-with" name="start-with" bind:value={startsWith} />
+				<InputErrorMessage show={!startsWithValid} code={startsWithErrorCode} />
 			  </div>
 			  <div class="space-y-1">
 				<Label for="contains">Contains</Label>
-				<Input id="contains" value="" />
+				<Input id="contains" name="contains" bind:value={contains} />
+				<InputErrorMessage show={!containsValid} code={containsErrorCode} />
 			  </div>
 			  <div class="space-y-1">
 				  <Label for="username">Ends In</Label>
-				  <Input id="end-in" value="" />
+				  <Input id="end-in" name="end-in" bind:value={endsIn} />
+				  <InputErrorMessage show={!endsInValid} code={endsInErrorCode} />
 			  </div>
 			</Card.Content>
 			<Card.Footer>
-			  <Button>Find</Button>
+			  <Button onclick={submitSearchByParts}>Find</Button>
 			</Card.Footer>
 		  </Card.Root>
 		</Tabs.Content>
 		<Tabs.Content value="unscramble">
 		  <Card.Root>
 			<Card.Header>
-			  <Card.Title>Unscramble words<br/>Solve anagrams</Card.Title>
+			  <Card.Title>Unscramble words.</Card.Title>
+			  <Card.Description>Solve anagrams.</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-2">
 			  <div class="space-y-1">
-				<Label for="current">Current password</Label>
-				<Input id="current" type="password" />
+				<Input id="scrambled-word" name="input" placeholder="Enter letters" bind:value={scrambledLetters} />
+				<InputErrorMessage show={!scrambledValid} code={scrambledErrorCode} />
 			  </div>
 			</Card.Content>
 			<Card.Footer>
-			  <Button>Save password</Button>
+			  <Button onclick={submitUnscramble}>Solve</Button>
 			</Card.Footer>
 		  </Card.Root>
 		</Tabs.Content>
+		<Tabs.Content value="find-missing-letters">
+			<Card.Root>
+			  <Card.Header>
+				<Card.Title>Find words with missing letters.</Card.Title>
+				<Card.Description>Solve crossword puzzles.</Card.Description>
+			  </Card.Header>
+			  <Card.Content class="space-y-2">
+				<div class="space-y-1">
+				  <Input id="word-with-missing-letters" name="input" placeholder="Enter letters" bind:value={wordWithMissingLetters} />
+				  <p class="opacity-50 pl-2 mt-4 flex flex-col"><small>Use ~ for an unknown single letter.</small><small>Use * for zero or more unknown letters.</small></p>
+				  <InputErrorMessage show={!wordWithMissingValid} code={wordWithMissingErrorCode} />
+				</div>
+			  </Card.Content>
+			  <Card.Footer>
+				<Button onclick={submitWordWithMissingLetters}>Solve</Button>
+			  </Card.Footer>
+			</Card.Root>
+		  </Tabs.Content>
 	  </Tabs.Root>
 	  <PopButton hide={!showSearchBar} className="absolute -bottom-12 left-1/2 -translate-x-1/2" onclick={() => {showSearchBar = false}}><CloseIcon /></PopButton>
 	</div>
-	{/if}
+{/if}
 
-	{@render children()}
-  </div>
+{#if !showSearchBar && !withResponse}
+	<div class="fixed mx-auto my-auto left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-full flex items-center justify-center flex-col z-10"
+	transition:fade>
+		<div class="text-[44px] leading-9 pb-2 font-semibold tracking-tight transition-colors">
+			HanapSalita
+		</div>
+		<div class="text-base opacity-50">
+			Find Tagalog words in a breeze.
+		</div>
+	</div>
+{/if}
+
+{@render children()}
+
+</div>
+
+<Toaster richColors />
   
