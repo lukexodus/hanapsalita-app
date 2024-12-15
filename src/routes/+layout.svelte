@@ -52,6 +52,33 @@
 
 	let wordWithMissingLetters = $state("");
 
+	// Bind elements
+
+	let formElement = $state(null);
+
+	$effect(() => {
+		if (formElement) {
+			console.log("form element")
+
+			function submitCallback (event) {
+				if (showSearchBar && event.key === "Enter") {
+					console.log("form enter keydown")
+					event.preventDefault();
+					if (mode == 'search-by-parts') {
+						submitSearchByParts();
+					} else if (mode == 'unscramble') {
+						submitUnscramble();
+					} else if (mode == 'find-missing-letters') {
+						submitWordWithMissingLetters();
+					}
+				}
+			}
+
+			formElement.addEventListener("keydown", submitCallback);
+		}
+	})
+
+
 	// Go to the relevant page based on the mode/tool
 	$effect(() => {
 		goto(`/${mode}`)
@@ -99,8 +126,6 @@
 	// Submit functinos
 
 	function submitSearchByParts() {
-		console.log("submit")
-
 		// Validate inputs
 		if (startsWith) {
 			const { valid, errorCode } = validateInput(startsWith);
@@ -177,7 +202,7 @@
 
 		// Submit Data
 
-		const paramsObject = { input: scrambledLetters };
+		const paramsObject = { w: scrambledLetters };
 		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
 
 		showSearchBar = false;
@@ -202,7 +227,7 @@
 
 		// Submit Data
 
-		const paramsObject = { input: wordWithMissingLetters };
+		const paramsObject = { w: wordWithMissingLetters };
 		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
 
 		showSearchBar = false;
@@ -217,7 +242,7 @@
 	<div 	
 	class="w-full sm:w-[425px] fixed top-2 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-in-out z-20"
 	in:fly={{ duration: 500, y: -500, opacity: 0 }}
-	out:fly={{ duration: 500, y: -500, opacity: 0 }}>
+	out:fly={{ duration: 500, y: -500, opacity: 0 }} bind:this={formElement}>
 	<Tabs.Root bind:value={mode} class="w-full">
 		<Tabs.List class="grid w-full grid-cols-3">
 		  <Tabs.Trigger value="search-by-parts">Search By Parts</Tabs.Trigger>

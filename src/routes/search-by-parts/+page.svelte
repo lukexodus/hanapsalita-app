@@ -158,8 +158,10 @@
                             <Tooltip.Root>
                                 <Tooltip.Trigger>{wordRecord.word}</Tooltip.Trigger>
                                 <Tooltip.Content>
-                                    <p>{wordRecord.category}</p>
                                     <p>{categories[wordRecord.category]}</p>
+                                    {#if wordRecord.category == "C"}
+                                    <small>Base form: {wordRecord.verb_base_form}</small>
+                                    {/if}
                                 </Tooltip.Content>
                               </Tooltip.Root>
                         </li>
@@ -172,6 +174,9 @@
         </div>
 
     {:else}
-        <p>no matching words</p>
+        <div class="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-full">
+            <h2 class="scroll-m-20 text-4xl font-semibold tracking-tight transition-colors first:mt-0">No matching words</h2>
+            <small class="text-[0.91rem]">Please try another keyword or try another filter.</small>
+        </div>
     {/if}
 {/if}

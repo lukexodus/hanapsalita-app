@@ -2,5 +2,6 @@ export const categories = {
     "PN": "Proper Noun",
     "V": "Verb",
     "C": "Conjugation",
-    "I": "Interjection"
+    "I": "Interjection",
+    "NV": "Noun"
 }
