@@ -50,3 +50,18 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export class StringBuilder {
+    constructor() {
+        this.parts = [];
+    }
+
+    append(str) {
+        this.parts.push(str); // Add string to the array
+        return this;          // Allow chaining
+    }
+
+    toString() {
+        return this.parts.join(""); // Combine all parts into a single string
+    }
+}
