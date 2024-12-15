@@ -60,19 +60,53 @@ export async function load({ url }) {
 			matchQuery = "%" + endsIn;
 		}
 
-		let queryString = 'SELECT `word`, `lang`, `length`, `category`, `verb_base_form` FROM `words` WHERE `lang` = "T" AND ' + keywordColumn + ' LIKE ? ORDER BY `length` DESC, `word` LIMIT 5';
+		let queryString = 'SELECT `word`, `lang`, `length`, `category`, `verb_base_form` FROM `words` WHERE `lang` = "T" AND ' + keywordColumn + ' LIKE ? ORDER BY `length` DESC, `word`';
 		try {
-			let [rows] = await pool.query(queryString, [matchQuery]);
+			let [ rows ] = await pool.query(queryString, [matchQuery]);
 
-			return { state: 1, data: rows }
+			return { state: 1, data: rows, filtersNum: 1, startsWith, contains, endsIn }
 		} catch (error) {
 			console.error("sbt | f1 | sql query error", error)
 			return { state: 1, data: null }
 		}
 	} else if (filtersNum == 2) {
-		let queryString = ""
+		let matchQuery = "";
+		let matchQuerySecond = "";
+		if (startsWith) {
+			matchQuery = startsWith + "%";
+			if (contains) {
+				matchQuerySecond = "%" + contains + "%";
+			} else if (endsIn) {
+				matchQuerySecond = "%" + endsIn;
+			}
+		} else {
+			matchQuery = "%" + contains + "%";
+			matchQuerySecond = "%" + endsIn;
+		}	
+
+		let queryString = 'SELECT `word`, `lang`, `length`, `category`, `verb_base_form` FROM `words` WHERE `lang` = "T" AND ' + keywordColumn + ' LIKE ? AND `id` IN (SELECT `id` FROM `words` WHERE lang = "T" AND ' + keywordColumn + ' LIKE ?) ORDER BY `length` DESC, `word`';
+		try {
+			let [ rows ] = await pool.query(queryString, [matchQuery, matchQuerySecond]);
+
+			return { state: 1, data: rows, filtersNum: 2, startsWith, contains, endsIn }
+		} catch (error) {
+			console.error("sbt | f2 | sql query error", error)
+			return { state: 1, data: null }
+		}
 	} else if (filtersNum == 3) {
-		let queryString = ""
+		let matchQuery = startsWith + "%";
+		let matchQuerySecond = "%" + contains + "%";
+		let matchQueryThird = "%" + endsIn;
+
+		let queryString = 'SELECT `word`, `lang`, `length`, `category`, `verb_base_form` FROM `words` WHERE `lang` = "T" AND ' + keywordColumn + ' LIKE ? AND `id` IN (SELECT `id` FROM `words` WHERE `lang` = "T" AND ' + keywordColumn + ' LIKE ? AND `id` IN (SELECT `id` FROM `words` WHERE lang = "T" AND ' + keywordColumn + ' LIKE ?)) ORDER BY `length` DESC, `word`';
+		try {
+			let [ rows ] = await pool.query(queryString, [matchQuery, matchQuerySecond, matchQueryThird]);
+
+			return { state: 1, data: rows, filtersNum: 3, startsWith, contains, endsIn }
+		} catch (error) {
+			console.error("sbt | f3 | sql query error", error)
+			return { state: 1, data: null }
+		}
 	}
 
 	console.log("success")

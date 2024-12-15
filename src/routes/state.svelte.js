@@ -1,0 +1,1 @@
+export const dataState = $state({ hasInitialData: false, hasResults: false, fetchingData: false });
