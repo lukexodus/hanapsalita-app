@@ -1,5 +1,8 @@
 <script>
-	import '../app.css';
+	import '../../app.css';
+
+	// Universal states
+	import { dataState } from "../state.svelte.js";
 
 	// shadcn imports
 
@@ -13,7 +16,7 @@
 	import { Toaster } from "$lib/components/ui/sonner";
 	import { toast } from "svelte-sonner";
 
-	// svc imports
+	// svg imports
 
 	import SearchIcon from "$lib/icons/search-icon.svelte";
 	import CloseIcon from "$lib/icons/close-icon.svelte"
@@ -28,10 +31,6 @@
 	import { untrack } from 'svelte';
 	import { fade, fly } from "svelte/transition";
 	import { goto } from '$app/navigation';
-	import Page from './+page.svelte';
-
-	// Universal states
-	import { dataState } from "./state.svelte.js"
 
 	// Props
 
@@ -58,8 +57,6 @@
 
 	$effect(() => {
 		if (formElement) {
-			console.log("form element")
-
 			function submitCallback (event) {
 				if (showSearchBar && event.key === "Enter") {
 					console.log("form enter keydown")
@@ -80,8 +77,15 @@
 
 
 	// Go to the relevant page based on the mode/tool
+	let nonPrimaryToolVisited = $state(false);
 	$effect(() => {
-		goto(`/${mode}`)
+		if (mode == 'unscramble' || mode == 'find-missing-letter') {
+			nonPrimaryToolVisited = true;
+		}
+		console.log(`mode change ${mode}`)
+		if (nonPrimaryToolVisited) {
+			goto(`/${mode}`)
+		}
 	})
 
 	// Validate search by parts input
@@ -238,7 +242,7 @@
 <div class="w-full h-screen relative">
 	<PopButton hide={showSearchBar} className="fixed top-2 right-2 md:top-4 md:right-4 transition-all duration-300" onclick={() => showSearchBar = true}><SearchIcon /></PopButton>
 {#if showSearchBar}
-	<div class="bg-neutral-100 opacity-60 w-full h-[130vh] fixed z-10 -translate-y-12" transition:fade={{ duration: 300 }}></div>
+	<div class="bg-neutral-100 opacity-60 w-full fixed z-10 h-[130vh] -translate-y-12" transition:fade={{ duration: 300 }}></div>
 	<div 	
 	class="w-full sm:w-[425px] fixed top-2 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-in-out z-20"
 	in:fly={{ duration: 500, y: -500, opacity: 0 }}
@@ -246,8 +250,8 @@
 	<Tabs.Root bind:value={mode} class="w-full">
 		<Tabs.List class="grid w-full grid-cols-3">
 		  <Tabs.Trigger value="search-by-parts">Search By Parts</Tabs.Trigger>
-		  <Tabs.Trigger value="unscramble">Unscramble</Tabs.Trigger>
-		  <Tabs.Trigger value="find-missing-letters">Find Missing Letters</Tabs.Trigger>
+		  <!-- <Tabs.Trigger value="unscramble">Unscramble</Tabs.Trigger>
+		  <Tabs.Trigger value="find-missing-letters">Find Missing Letters</Tabs.Trigger> -->
 		</Tabs.List>
 		<Tabs.Content value="search-by-parts">
 		  <Card.Root>
@@ -276,7 +280,7 @@
 			</Card.Footer>
 		  </Card.Root>
 		</Tabs.Content>
-		<Tabs.Content value="unscramble">
+		<!-- <Tabs.Content value="unscramble">
 		  <Card.Root>
 			<Card.Header>
 			  <Card.Title>Unscramble words.</Card.Title>
@@ -310,7 +314,7 @@
 				<Button onclick={submitWordWithMissingLetters}>Solve</Button>
 			  </Card.Footer>
 			</Card.Root>
-		  </Tabs.Content>
+		  </Tabs.Content> -->
 	  </Tabs.Root>
 	  <PopButton hide={!showSearchBar} className="absolute -bottom-12 left-1/2 -translate-x-1/2" onclick={() => {showSearchBar = false}}><CloseIcon /></PopButton>
 	</div>

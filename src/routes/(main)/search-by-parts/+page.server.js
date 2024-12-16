@@ -1,5 +1,5 @@
 import pool from "$lib/db.js"
-import { purifyWord } from "$lib/utils.js"
+import { removeNonAlphabet } from "$lib/utils.js"
 
 export async function load({ url }) {
     let startsWith = url.searchParams.get("startsWith") ?? null;
@@ -38,9 +38,9 @@ export async function load({ url }) {
 	// cleans the inputs once more
 	// - removes all non-letter chars
 	if (!strict) {
-		if (startsWith) {startsWith = purifyWord(startsWith)}
-		if (contains) {contains = purifyWord(contains)}
-		if (endsIn) {endsIn = purifyWord(endsIn)}
+		if (startsWith) {startsWith = removeNonAlphabet(startsWith)}
+		if (contains) {contains = removeNonAlphabet(contains)}
+		if (endsIn) {endsIn = removeNonAlphabet(endsIn)}
 	}
 
 	let keywordColumn = strict ? "keyword_strict" : "keyword_not_strict";

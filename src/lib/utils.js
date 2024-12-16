@@ -2,8 +2,33 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 
-export function purifyWord(query) {
-    return query.replace(/[^a-z]/gi, "");
+export function removeNonAlphabet(word) {
+    return word.replace(/[^a-z]/gi, "");
+}
+
+export function removeNonValidChars(word) {
+    return word.replace(/[^a-zA-Z'-]/gi, "");
+}
+
+export function sortWord(word) {
+    return word
+        .split("")
+        .sort((a, b) => a.localeCompare(b))
+        .join("");
+}
+
+export function removeDuplicateChars(word) {
+    const seen = new Set();
+    return word 
+        .split("")          
+        .filter(char => { 
+            if (seen.has(char)) {
+                return false;
+            }
+            seen.add(char);
+            return true;
+        })
+        .join("");
 }
 
 export function cn(...inputs) {

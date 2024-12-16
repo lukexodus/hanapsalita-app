@@ -3,5 +3,7 @@ export const categories = {
     "V": "Verb",
     "C": "Conjugation",
     "I": "Interjection",
-    "NV": "Noun"
+    "NV": "Noun",
+    "A": "Adjective"
 }
+

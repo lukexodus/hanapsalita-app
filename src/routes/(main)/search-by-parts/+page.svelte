@@ -5,7 +5,7 @@
     let { data } = $props();
 
     // Universal states
-	import { dataState } from "../state.svelte.js"
+	import { dataState } from "../../state.svelte.js"
 
     // shadcn imports
     import { Badge } from "$lib/components/ui/badge/index.js";
@@ -14,6 +14,9 @@
     // Configuration variables
     import { categories } from "$lib/config.js"
 
+    // Data structures
+    import { LinkedList, Stack } from "$lib/data-structures.js"
+ 
     let filtersNum = $state(0)
     let startsWith = $state("")
     let contains = $state("")
@@ -101,7 +104,7 @@
                         subHeadingTitleArray = subHeadingTitleArray.concat(["Start", "With", startsWithHighlight, "And", "Contain", containsHighlight]);
                     } else if (endsIn) {
                         titleArray = titleArray.concat(["Nagsisimula", "Sa", startsWithHighlight, "At", "Nagtatapos", "Sa", endsInHighlight]);
-                        subHeadingTitleArray = subHeadingTitleArray.concat(["Start", "With", startsWithHighlight, "And", "Contain", containsHighlight]);
+                        subHeadingTitleArray = subHeadingTitleArray.concat(["Start", "With", startsWithHighlight, "And", "End", "In", endsInHighlight]);
                     }
                 } else {
                     titleArray = titleArray.concat(["Naglalaman", "Ng", containsHighlight, "At", "Nagtatapos", "Sa", endsInHighlight]);
@@ -131,8 +134,6 @@
             }, new Map());
 
             lengthsList = new Set(subdividedResults.keys())
-
-            console.log(subdividedResults[5])
         }
     })
 
