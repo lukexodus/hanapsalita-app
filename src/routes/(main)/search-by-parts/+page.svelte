@@ -1,5 +1,5 @@
 <script>
-	import { getContext, onMount, untrack } from "svelte";
+	import { onMount, untrack } from "svelte";
     import { fade } from "svelte/transition";
 
     let { data } = $props();
@@ -19,7 +19,7 @@
     import { categories } from "$lib/config.js"
 
     // Data structures
-    import { LinkedList, Stack } from "$lib/data-structures.js"
+    import { LinkedList, Stack } from "$lib/data-structures.svelte.js"
  
     // Input states
     let filtersNum = $state(0)
@@ -37,6 +37,18 @@
     let subdividedResults = $state(new Map());  // key: int(length) | value: string(word)[]
     let lengthsList = $state([]);  // To be iterated upon
 
+    // History stack
+    let historyStack = $state(new Stack());
+    // Track history stack
+    $effect(() => {
+        console.log(`historyStack change ${historyStack.size()}`)
+        if (historyStack.size() > 0) {
+            dataState.undoAvailable = true;
+        } else {
+            dataState.undoAvailable = false;
+        }
+    })
+
     // Saving current data for future reference
     let previousTotal = 0;  // This variable is to fix (in a makeshift way) the bug of the `process data effect` running twice
 
@@ -48,12 +60,10 @@
         console.log("page mount")
         dataState.fetchingData = false;
 
+        // Sync favorites
         syncFavorites();
         syncFavoriteMode();
     });
-
-    // Modes
-    let favoriteMode = getContext('favoriteMode');
 
     // -- Effects --
 
@@ -163,7 +173,7 @@
 {#if dataState.hasInitialData && !dataState.fetchingData}
     <!-- If there are results -->
     {#if dataState.hasResults}
-        <div class="mt-12 py-4 pb-16 px-4 sm:mx-6 lg:mx-20">
+        <div class="mt-14 py-4 pb-16 px-4 sm:mx-6 lg:mx-20 xl:mx-60 2xl:mx-96">
             <h1 class="scroll-m-20 text-4xl font-extrabold mb-3 leading-9 tracking-tight lg:text-5xl" transition:fade={{ duration: 300 }}>
                 {@html title}
             </h1>
@@ -171,15 +181,15 @@
                 <Badge variant="outline" class="mb-6">Found {data.data.length} {data.data.length > 1 ? 'words' : 'word'}</Badge>
             {/if}
 
-            <div class="space-y-4">
+            <div class="space-y-6">
             <!-- Subdivision by length -->
             {#each lengthsList as length}
                 <section class="">
                     <h2 class="scroll-m-20 pb-2 text-2xl font-semibold tracking-tight transition-colors first:mt-0">{@html length.toString() + subHeadingTitle}</h2>
                     <ul class="flex flex-wrap">
                         {#each subdividedResults.get(length) as wordRecord}
-                        <li class="mr-4 cursor-pointer">
-                            <Word {wordRecord} {favoriteMode} />
+                        <li class="mr-4 mt-1 cursor-pointer">
+                            <Word {wordRecord} {historyStack} />
                         </li>
                         
                         {/each}

@@ -6,7 +6,6 @@
 	import { syncFavoriteMode, syncFavorites } from '$lib/utils-reactive.svelte.js';
 
 	// shadcn imports
-
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Tabs from "$lib/components/ui/tabs/index.js";
@@ -18,47 +17,43 @@
 	import { toast } from "svelte-sonner";
 
 	// svg imports
-
 	import SearchIcon from "$lib/icons/search-icon.svelte";
 	import HeartOutline from '$lib/icons/heart-outline.svelte';
 	import HeartFill from '$lib/icons/heart-fill.svelte';
 	import CloseIcon from "$lib/icons/close-icon.svelte"
+	import Undo from '$lib/icons/undo.svelte';
+	import Redo from '$lib/icons/redo.svelte';
 
 	// Custom-made components
-
 	import PopButton from "$lib/components/pop-button.svelte"
 	import InputErrorMessage from '@/input-error-message.svelte';
 
 	// Svelte imports
-
 	import { onMount, untrack } from 'svelte';
 	import { fade, fly } from "svelte/transition";
 	import { goto } from '$app/navigation';
 	import ListIcon from '$lib/icons/list-icon.svelte';
 
 	// Props
-
 	let { children } = $props();
 
 	// UI States
-
 	let mode = $state('search-by-parts');
 	let showSearchBar = $state(false);
 
 	// Input bound values
-
 	let startsWith = $state("");
 	let contains = $state("");
 	let endsIn = $state("");
-
+	//
 	let scrambledLetters = $state("");
-
+	//
 	let wordWithMissingLetters = $state("");
 
 	// Bind elements
-
 	let formElement = $state(null);
 
+	// Bind 'Enter' key callback on the floating form
 	$effect(() => {
 		if (formElement) {
 			function submitCallback (event) {
@@ -79,7 +74,6 @@
 		}
 	})
 
-
 	// Go to the relevant page based on the mode/tool
 	let nonPrimaryToolVisited = $state(false);
 	$effect(() => {
@@ -93,7 +87,6 @@
 	})
 
 	// Validate search by parts input
-
 	function validateInput(letters) {  // Validation function
 		let valid = true;
 		let errorCode = 0;
@@ -119,21 +112,20 @@
 	}
 
 	// Input valid states
-
 	let startsWithValid = $state(true);
 	let startsWithErrorCode = $state(0)
 	let containsValid = $state(true);
 	let containsErrorCode = $state(0)
 	let endsInValid = $state(true);
 	let endsInErrorCode = $state(0)
-
+	//
 	let scrambledValid = $state(true);
 	let scrambledErrorCode = $state(0);
-
+	//
 	let wordWithMissingValid = $state(true);
 	let wordWithMissingErrorCode = $state(0);
 
-	// Submit functinos
+	// -- Submit functinos --
 
 	function submitSearchByParts() {
 
@@ -290,8 +282,8 @@
 </script>
 
 <div class="w-full h-screen relative">
-	<PopButton hide={showSearchBar} className="fixed top-2 right-2 md:top-4 md:right-4 transition-all duration-300" onclick={() => showSearchBar = true}><SearchIcon /></PopButton>
-	<PopButton hide={showSearchBar} className="fixed top-2 right-14 md:top-4 md:right-16 transition-all duration-300" onclick={() => dataState.favoriteMode = !dataState.favoriteMode}>
+	<PopButton hide={showSearchBar} className="fixed top-4 right-4 md:right-4 transition-all duration-300" onclick={() => showSearchBar = true}><SearchIcon /></PopButton>
+	<PopButton hide={showSearchBar} className="fixed top-4 right-16  md:right-16 transition-all duration-300" onclick={() => dataState.favoriteMode = !dataState.favoriteMode}>
 		{#if dataState.favoriteMode}
 		<HeartFill />
 		{:else}
@@ -299,11 +291,25 @@
 		{/if}
 	</PopButton>
 	{#if dataState.favoriteMode} 
-		<PopButton hide={showSearchBar} className="fixed top-2 right-[6.6rem] md:top-4 md:right-28 transition-all duration-300" onclick={() => null}><ListIcon /></PopButton>
+		<PopButton hide={showSearchBar} className="fixed top-4 right-40 md:top-4 md:right-40 transition-all duration-300" onclick={() => null}>
+			{#if dataState.redoAvailable}
+				<Redo />
+			{:else}
+				<Redo className="text-gray-300" />
+			{/if}
+		</PopButton>
+		<PopButton hide={showSearchBar} className="fixed top-4 right-52 md:top-4 md:right-52 transition-all duration-300" onclick={() => null}>
+			{#if dataState.undoAvailable}
+				<Undo />
+			{:else}
+				<Undo className="text-gray-300" />
+			{/if}
+		</PopButton>
+		<PopButton hide={showSearchBar} className="fixed top-4 right-28 md:top-4 md:right-28 transition-all duration-300" onclick={() => null}><ListIcon /></PopButton>
 	{/if}
 
 {#if showSearchBar}
-	<div class="bg-neutral-100 opacity-60 w-full fixed z-10 h-[130vh] -translate-y-12" transition:fade={{ duration: 300 }}></div>
+	<div class="bg-neutral-100 opacity-60 w-full fixed z-10 h-[130vh] -translate-y-16" transition:fade={{ duration: 300 }}></div>
 	<div 	
 	class="w-full sm:w-[425px] fixed top-2 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-in-out z-20"
 	in:fly={{ duration: 500, y: -500, opacity: 0 }}

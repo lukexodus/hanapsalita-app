@@ -1,16 +1,25 @@
 <script>
+    // UI components
     import * as Tooltip from "$lib/components/ui/tooltip/index.js";
+
+    // Config variables
     import { categories } from "$lib/config.js"
     
+    // Universal State
     import { dataState } from "../../routes/state.svelte";
 
-    let { wordRecord } = $props();
+    // Props
+    let { wordRecord, historyStack } = $props();
 
+    // States
     let isFavorite = $state(dataState.favorites && dataState.favorites.has(wordRecord.word));
 
     function toggleIsFavorite() {
         if (dataState.favoriteMode) {
+            // Toggle component state
             isFavorite = !isFavorite;
+
+            // Sync with universal `favorites` set state
             if (dataState.favorites) {
                 if (isFavorite) {
                     dataState.favorites.add(wordRecord.word);
@@ -18,7 +27,15 @@
                     dataState.favorites.delete(wordRecord.word);
                 }
             } else {
+                // Initialization of `dataSatate.favorites`
                 dataState.favorites = new Set([wordRecord.word]);
+            }
+
+            // Update history stack
+            if (isFavorite) {
+                historyStack.push({op: "add", word: wordRecord.word})
+            } else {
+                historyStack.push({op: "remove", word: wordRecord.word})
             }
         }
     }

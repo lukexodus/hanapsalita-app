@@ -6,6 +6,8 @@ class Node {
 }
 
 export class LinkedList {
+    size = $state(0);
+
     constructor() {
         this.head = null; // Start of the linked list
         this.size = 0;    // Size of the list

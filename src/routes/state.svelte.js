@@ -3,5 +3,7 @@ export const dataState = $state({
     hasResults: false,
     fetchingData: false,
     favoriteMode: false,
-    favorites: null
+    favorites: null,
+    undoAvailable: false,
+    redoAvailable: false
 });
