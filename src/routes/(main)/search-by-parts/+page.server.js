@@ -108,6 +108,4 @@ export async function load({ url }) {
 			return { state: 1, data: null }
 		}
 	}
-
-	console.log("success")
 }

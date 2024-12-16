@@ -1,4 +1,5 @@
 <script>
+	// shadcn UI components
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -6,18 +7,30 @@
 	import * as Select from "$lib/components/ui/select/index.js";
 	import { toast } from "svelte-sonner";
 
+	// Config variables
 	import { categories as categoriesConfig } from "$lib/config.js"
 
+	// Icons
 	import CircleMinusIcon from "$lib/icons/circle-minus.svelte"
 	import CheckIcon from "$lib/icons/check.svelte"
 
+	// Svelte
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
+	// Universal states
+	import { dataState } from "../../state.svelte.js"
+    import { syncFavorites, syncFavoriteMode } from "$lib/utils-reactive.svelte.js";
+
 	let { data, form } = $props();
 
-	// Initial data
+	// Sync favorites
+	onMount(() => {
+		syncFavorites();
+		syncFavoriteMode();
+	})
 
+	// Initial data
 	const categories = [
 		{ value: "PN", label: "Proper Noun" },
 		{ value: "NV", label: "Noun" },
@@ -27,8 +40,7 @@
 		{ value: "A", label: "Adjective" }
   	];
 
-	// Initial data states
-
+	// -- Initial data states --
 	let newWordCategoryObject = $state(form?.missingBaseForm || (form?.category == 'C' && form?.baseFormContainsInvalid) ? {value: "C", label: "Conjugation"} : {value: "PN", label: "Proper Noun"});  // Select component bound value
 	let newWordCategory = $state("PN");
 

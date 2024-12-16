@@ -3,6 +3,7 @@
 
 	// Universal states
 	import { dataState } from "../state.svelte.js";
+	import { syncFavoriteMode, syncFavorites } from '$lib/utils-reactive.svelte.js';
 
 	// shadcn imports
 
@@ -19,6 +20,8 @@
 	// svg imports
 
 	import SearchIcon from "$lib/icons/search-icon.svelte";
+	import HeartOutline from '$lib/icons/heart-outline.svelte';
+	import HeartFill from '$lib/icons/heart-fill.svelte';
 	import CloseIcon from "$lib/icons/close-icon.svelte"
 
 	// Custom-made components
@@ -28,9 +31,10 @@
 
 	// Svelte imports
 
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { fade, fly } from "svelte/transition";
 	import { goto } from '$app/navigation';
+	import ListIcon from '$lib/icons/list-icon.svelte';
 
 	// Props
 
@@ -114,6 +118,8 @@
 		}
 	}
 
+	// Input valid states
+
 	let startsWithValid = $state(true);
 	let startsWithErrorCode = $state(0)
 	let containsValid = $state(true);
@@ -130,43 +136,50 @@
 	// Submit functinos
 
 	function submitSearchByParts() {
-		// Validate inputs
+
+		// -- Validate inputs --
+		// Validate `startsWith` input
 		if (startsWith) {
 			const { valid, errorCode } = validateInput(startsWith);
 			startsWithValid = valid;
 			startsWithErrorCode = errorCode;
-
+			
 			if (!startsWithValid) {
 				return
 			}
 		}
+		// Validate `contains` input
 		if (contains) {
 			const { valid, errorCode } = validateInput(contains);
 			containsValid = valid;
 			containsErrorCode = errorCode;
-
+			
 			if (!containsValid) {
 				return
 			}
 		}
+		// Validate `endsIn` input
 		if (endsIn) {
 			const { valid, errorCode } = validateInput(endsIn);
 			endsInValid = valid;
 			endsInErrorCode = errorCode;
-
+			
 			if (!endsInValid) {
 				return
 			}
 		}
-
+		
+		// Warns empty input
 		if (!startsWith && !contains && !endsIn) {
 			toast.warning("All inputs are empty.")
 		}
 
+		// Trigger fetching UI state
 		dataState.fetchingData = true;
 
-		// Submit data
+		// -- Submit data --
 
+		// Form the param object
 		const paramsObject = {};
 		if (startsWith) {
 			paramsObject.startsWith = startsWith;
@@ -181,14 +194,22 @@
 
 		console.log('/search-by-parts?' + paramsPart)
 
+		// Reset UI states
 		showSearchBar = false;
 		startsWith = "";
 		contains = "";
 		endsIn = "";
+
+		// Sync favorites
+		syncFavorites();
+		syncFavoriteMode();
+
+		// Initiate load function
 		goto('/search-by-parts?' + paramsPart);
 	}
 
 	function submitUnscramble() {
+		// Input validation
 		if (scrambledLetters) {
 			const { valid, errorCode } = validateInput(scrambledLetters);
 			scrambledValid = valid;
@@ -202,18 +223,28 @@
 			return;
 		}
 
+		// Trigger the fetch UI state
 		dataState.fetchingData = true;
 
-		// Submit Data
+		// -- Submit Data --
 
+		// Form the param object
 		const paramsObject = { w: scrambledLetters };
 		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
 
+		// Reset UI state
 		showSearchBar = false;
+
+		// Sync favorites
+		syncFavorites();
+		syncFavoriteMode();
+
+		// Trigger the load function
 		goto('/unscramble?' + paramsPart);
 	}
 
 	function submitWordWithMissingLetters() {
+		// Input validation
 		if (wordWithMissingLetters) {
 			const { valid, errorCode } = validateInput(wordWithMissingLetters);
 			wordWithMissingValid = valid;
@@ -227,20 +258,50 @@
 			return;
 		}
 
+		// Trigger the fetching UI state
 		dataState.fetchingData = true;
 
-		// Submit Data
+		// -- Submit Data --
 
+		// Form the param object
 		const paramsObject = { w: wordWithMissingLetters };
 		const paramsPart = `${new URLSearchParams(paramsObject).toString()}`;
 
+		// Reset UI state
 		showSearchBar = false;
+
+		// Sync favorites
+		if (dataState.favoriteMode) {
+			syncFavorites();
+			syncFavoriteMode();
+		}
+
+		// Trigger the load function
 		goto('/find-missing-letters?' + paramsPart);
 	}
+
+	// Sync favorites
+	onMount(() => {
+		syncFavorites();
+		syncFavoriteMode();
+	})
+
+
 </script>
 
 <div class="w-full h-screen relative">
 	<PopButton hide={showSearchBar} className="fixed top-2 right-2 md:top-4 md:right-4 transition-all duration-300" onclick={() => showSearchBar = true}><SearchIcon /></PopButton>
+	<PopButton hide={showSearchBar} className="fixed top-2 right-14 md:top-4 md:right-16 transition-all duration-300" onclick={() => dataState.favoriteMode = !dataState.favoriteMode}>
+		{#if dataState.favoriteMode}
+		<HeartFill />
+		{:else}
+		<HeartOutline />
+		{/if}
+	</PopButton>
+	{#if dataState.favoriteMode} 
+		<PopButton hide={showSearchBar} className="fixed top-2 right-[6.6rem] md:top-4 md:right-28 transition-all duration-300" onclick={() => null}><ListIcon /></PopButton>
+	{/if}
+
 {#if showSearchBar}
 	<div class="bg-neutral-100 opacity-60 w-full fixed z-10 h-[130vh] -translate-y-12" transition:fade={{ duration: 300 }}></div>
 	<div 	

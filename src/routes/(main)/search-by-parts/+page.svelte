@@ -1,15 +1,19 @@
 <script>
-	import { onMount, untrack } from "svelte";
+	import { getContext, onMount, untrack } from "svelte";
     import { fade } from "svelte/transition";
 
     let { data } = $props();
 
     // Universal states
 	import { dataState } from "../../state.svelte.js"
+    import { syncFavorites, syncFavoriteMode } from "$lib/utils-reactive.svelte.js";
 
     // shadcn imports
     import { Badge } from "$lib/components/ui/badge/index.js";
     import * as Tooltip from "$lib/components/ui/tooltip/index.js";
+
+    // own components imports
+    import Word from "$lib/components/word.svelte"
 
     // Configuration variables
     import { categories } from "$lib/config.js"
@@ -17,30 +21,44 @@
     // Data structures
     import { LinkedList, Stack } from "$lib/data-structures.js"
  
+    // Input states
     let filtersNum = $state(0)
     let startsWith = $state("")
     let contains = $state("")
     let endsIn = $state("")
 
-    let hasError = $state(false)
-
+    // Title and subheading formation values
     let titleArray = ["Mga", "Salitang"];
     let title = $state("");
     let subHeadingTitleArray = ["-Letter", "Tagalog", "Words", "That"]
     let subHeadingTitle = $state("");
 
-    let subdividedResults = $state(new Map());
-    let lengthsList = $state([]);
+    // Content
+    let subdividedResults = $state(new Map());  // key: int(length) | value: string(word)[]
+    let lengthsList = $state([]);  // To be iterated upon
 
-    let previousTotal = 0;
+    // Saving current data for future reference
+    let previousTotal = 0;  // This variable is to fix (in a makeshift way) the bug of the `process data effect` running twice
 
+    // Variables for deduplication
     let keywordStyle = "border-b";
 
+    // When the page mounts, load function has already finished
     onMount(() => {
         console.log("page mount")
         dataState.fetchingData = false;
+
+        syncFavorites();
+        syncFavoriteMode();
     });
 
+    // Modes
+    let favoriteMode = getContext('favoriteMode');
+
+    // -- Effects --
+
+    // Update data availability and fetching states.
+    // UI updates depend on these states.
     $effect(() => {
         dataState.fetchingData = false;
         if (!dataState.hasInitialData) {
@@ -54,12 +72,12 @@
         dataState.hasResults = data.data && data.data.length > 0 ? true : false;
     })
 
+    // Process data effect
     $effect(() => {
         if (dataState.hasResults && data.data.length != previousTotal) {
+            // Save current data length
             previousTotal = data.data.length;
 
-            console.log(`data.data.length ${data.data.length}`)
-            console.log("hasResults")
             // Update state from server-data
             let { filtersNum: filtersNumNew, startsWith: startsWithNew, contains: containsNew, endsIn: endsInNew } = data;
             filtersNum = filtersNumNew;
@@ -115,13 +133,15 @@
                 subHeadingTitleArray = subHeadingTitleArray.concat(["Start", "With", startsWithHighlight + ",", "Contain", containsHighlight + ",", "And", "End", "In", endsInHighlight]);
             } 
 
+            // Prevent reruns of effect caused by tracking of
+            // unrelated states.
             untrack(() => {
                 title = titleArray.join(" ");
                 subHeadingTitle = subHeadingTitleArray.join(" ");
             })
 
 
-            // Subdivide based on length
+            // Subdivide the list of words based on length
             subdividedResults = data.data.reduce((acc, recordObject) => {
                 const key = recordObject["length"];
 
@@ -133,6 +153,7 @@
                 return acc;
             }, new Map());
 
+            // Make the list of lengths, to be iterated upon
             lengthsList = new Set(subdividedResults.keys())
         }
     })
@@ -140,31 +161,25 @@
 </script>
 
 {#if dataState.hasInitialData && !dataState.fetchingData}
+    <!-- If there are results -->
     {#if dataState.hasResults}
         <div class="mt-12 py-4 pb-16 px-4 sm:mx-6 lg:mx-20">
             <h1 class="scroll-m-20 text-4xl font-extrabold mb-3 leading-9 tracking-tight lg:text-5xl" transition:fade={{ duration: 300 }}>
                 {@html title}
             </h1>
             {#if data.data}
-                <Badge variant="outline" class="mb-6">Found {data.data.length} words</Badge>
+                <Badge variant="outline" class="mb-6">Found {data.data.length} {data.data.length > 1 ? 'words' : 'word'}</Badge>
             {/if}
 
             <div class="space-y-4">
+            <!-- Subdivision by length -->
             {#each lengthsList as length}
                 <section class="">
                     <h2 class="scroll-m-20 pb-2 text-2xl font-semibold tracking-tight transition-colors first:mt-0">{@html length.toString() + subHeadingTitle}</h2>
                     <ul class="flex flex-wrap">
                         {#each subdividedResults.get(length) as wordRecord}
                         <li class="mr-4 cursor-pointer">
-                            <Tooltip.Root>
-                                <Tooltip.Trigger>{wordRecord.word}</Tooltip.Trigger>
-                                <Tooltip.Content>
-                                    <p>{categories[wordRecord.category]}</p>
-                                    {#if wordRecord.category == "C"}
-                                    <small>Base form: {wordRecord.verb_base_form}</small>
-                                    {/if}
-                                </Tooltip.Content>
-                              </Tooltip.Root>
+                            <Word {wordRecord} {favoriteMode} />
                         </li>
                         
                         {/each}
@@ -174,10 +189,11 @@
             </div>
         </div>
 
+    <!-- If there are no matching words -->
     {:else}
         <div class="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-full">
             <h2 class="scroll-m-20 text-4xl font-semibold tracking-tight transition-colors first:mt-0">No matching words</h2>
             <small class="text-[0.91rem]">Please try another keyword or try another filter.</small>
-        </div>
+        </div> 
     {/if}
 {/if}

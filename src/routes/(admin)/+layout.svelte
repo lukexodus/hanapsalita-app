@@ -13,7 +13,17 @@
     // Custom-made components
 	import PopButton from "$lib/components/pop-button.svelte"
 
+    // Universal state
+    import { dataState } from '../state.svelte';
+    import { syncFavorites, syncFavoriteMode } from '$lib/utils-reactive.svelte';
+
     let { children } = $props();
+
+    // Sync favorites
+	onMount(() => {
+        syncFavorites();
+        syncFavoriteMode();
+	})
 </script>
 
 <div class="w-full h-screen relative">
