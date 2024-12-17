@@ -20,15 +20,18 @@
 
 	// Universal states
 	import { dataState } from "../../state.svelte.js"
-    import { syncFavorites, syncFavoriteMode } from "$lib/utils-reactive.svelte.js";
+    import { syncFavorites, syncFavoriteMode, resetHistoryStack } from "$lib/utils-reactive.svelte.js";
 
 	let { data, form } = $props();
 
 	// Sync favorites
 	onMount(() => {
-		syncFavorites();
-		syncFavoriteMode();
-	})
+        syncFavorites();
+        syncFavoriteMode();
+    })
+
+	// Reset History Stack
+	resetHistoryStack();
 
 	// Initial data
 	const categories = [

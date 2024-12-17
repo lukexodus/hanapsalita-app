@@ -80,4 +80,10 @@ export class Stack {
     size() {
         return this.linkedList.getSize();
     }
+
+    // Clear the stack
+    clear() {
+        this.linkedList.head = null; // Reset head to null
+        this.linkedList.size = 0;    // Reset size to 0
+    }
 }

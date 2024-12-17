@@ -6,7 +6,7 @@
 
     // Universal states
 	import { dataState } from "../../state.svelte.js"
-    import { syncFavorites, syncFavoriteMode } from "$lib/utils-reactive.svelte.js";
+    import { syncFavorites, syncFavoriteMode, resetHistoryStack } from "$lib/utils-reactive.svelte.js";
 
     // shadcn imports
     import { Badge } from "$lib/components/ui/badge/index.js";
@@ -37,17 +37,26 @@
     let subdividedResults = $state(new Map());  // key: int(length) | value: string(word)[]
     let lengthsList = $state([]);  // To be iterated upon
 
-    // History stack
-    let historyStack = $state(new Stack());
+    // History stack reinitialize (not working)
+    resetHistoryStack();
     // Track history stack
     $effect(() => {
-        console.log(`historyStack change ${historyStack.size()}`)
-        if (historyStack.size() > 0) {
+        console.log(`dataState.historyStack change ${dataState.historyStack.size()}`)
+        if (dataState.historyStack.size() > 0) {
             dataState.undoAvailable = true;
         } else {
             dataState.undoAvailable = false;
         }
-    })
+    });
+
+    $effect(() => {
+        console.log(`dataState.undidHistoryStack change ${dataState.undidHistoryStack.size()}`)
+        if (dataState.undidHistoryStack.size() > 0) {
+            dataState.redoAvailable = true;
+        } else {
+            dataState.redoAvailable = false;
+        }
+    });
 
     // Saving current data for future reference
     let previousTotal = 0;  // This variable is to fix (in a makeshift way) the bug of the `process data effect` running twice
@@ -59,11 +68,16 @@
     onMount(() => {
         console.log("page mount")
         dataState.fetchingData = false;
+    });
 
-        // Sync favorites
+    // Sync favorites
+    onMount(() => {
         syncFavorites();
         syncFavoriteMode();
-    });
+    })
+
+    // Reset History Stack
+    resetHistoryStack();
 
     // -- Effects --
 
@@ -189,7 +203,7 @@
                     <ul class="flex flex-wrap">
                         {#each subdividedResults.get(length) as wordRecord}
                         <li class="mr-4 mt-1 cursor-pointer">
-                            <Word {wordRecord} {historyStack} />
+                            <Word {wordRecord} historyStack={dataState.historyStack} />
                         </li>
                         
                         {/each}

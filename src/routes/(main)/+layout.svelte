@@ -3,7 +3,7 @@
 
 	// Universal states
 	import { dataState } from "../state.svelte.js";
-	import { syncFavoriteMode, syncFavorites } from '$lib/utils-reactive.svelte.js';
+	import { syncFavoriteMode, syncFavorites, resetHistoryStack } from '$lib/utils-reactive.svelte.js';
 
 	// shadcn imports
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -33,6 +33,7 @@
 	import { fade, fly } from "svelte/transition";
 	import { goto } from '$app/navigation';
 	import ListIcon from '$lib/icons/list-icon.svelte';
+	import { Stack } from '$lib/data-structures.svelte';
 
 	// Props
 	let { children } = $props();
@@ -196,6 +197,9 @@
 		syncFavorites();
 		syncFavoriteMode();
 
+		// Reset History Stack
+		resetHistoryStack();
+
 		// Initiate load function
 		goto('/search-by-parts?' + paramsPart);
 	}
@@ -231,6 +235,9 @@
 		syncFavorites();
 		syncFavoriteMode();
 
+		// Reset History Stack
+		resetHistoryStack();
+
 		// Trigger the load function
 		goto('/unscramble?' + paramsPart);
 	}
@@ -263,10 +270,11 @@
 		showSearchBar = false;
 
 		// Sync favorites
-		if (dataState.favoriteMode) {
-			syncFavorites();
-			syncFavoriteMode();
-		}
+		syncFavorites();
+		syncFavoriteMode();
+
+		// Reset History Stack
+		resetHistoryStack();
 
 		// Trigger the load function
 		goto('/find-missing-letters?' + paramsPart);
@@ -274,10 +282,18 @@
 
 	// Sync favorites
 	onMount(() => {
-		syncFavorites();
-		syncFavoriteMode();
-	})
+        syncFavorites();
+        syncFavoriteMode();
+    })
 
+	// Reset History Stack
+	resetHistoryStack();
+
+	// Debug undo redo
+	$effect(() => {
+		console.log(`dataState.undoAvailable ${dataState.undoAvailable}`)
+		console.log(`dataState.redoAvailable ${dataState.redoAvailable}`)
+	})
 
 </script>
 
@@ -293,19 +309,48 @@
 	{#if dataState.favoriteMode} 
 		<PopButton hide={showSearchBar} className="fixed top-4 right-40 md:top-4 md:right-40 transition-all duration-300" onclick={() => null}>
 			{#if dataState.redoAvailable}
-				<Redo />
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<!-- svelte-ignore event_directive_deprecated -->
+				<span on:click={() => {
+					console.log("redo clicked");
+					let previousAction = dataState.undidHistoryStack.pop();
+
+					previousAction.toggleClosure();
+
+					dataState.historyStack.push(previousAction);
+				}} >
+					<Redo />
+				</span>
 			{:else}
-				<Redo className="text-gray-300" />
+				<Redo disabled={true} />
 			{/if}
 		</PopButton>
 		<PopButton hide={showSearchBar} className="fixed top-4 right-52 md:top-4 md:right-52 transition-all duration-300" onclick={() => null}>
 			{#if dataState.undoAvailable}
-				<Undo />
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<!-- svelte-ignore event_directive_deprecated -->
+				<span on:click={() => {
+					console.log("undo clicked")
+					let previousAction = dataState.historyStack.pop();
+
+					// Reverse the action by toggling again the `isFavorite`
+					// state of the component
+					previousAction.toggleClosure()
+					if (dataState.undidHistoryStack) {
+						dataState.undidHistoryStack.push(previousAction);
+					} else {
+						dataState.undidHistoryStack = new Stack();
+					}
+				}} >
+					<Undo />
+				</span>
 			{:else}
-				<Undo className="text-gray-300" />
+				<Undo disabled={true} />
 			{/if}
 		</PopButton>
-		<PopButton hide={showSearchBar} className="fixed top-4 right-28 md:top-4 md:right-28 transition-all duration-300" onclick={() => null}><ListIcon /></PopButton>
+		<PopButton hide={showSearchBar} className="fixed top-4 right-28 md:top-4 md:right-28 transition-all duration-300" onclick={() => goto("/favorites")}><ListIcon /></PopButton>
 	{/if}
 
 {#if showSearchBar}

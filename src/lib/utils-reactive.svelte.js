@@ -1,4 +1,19 @@
 import { dataState } from "../routes/state.svelte";
+import { Stack } from "./data-structures.svelte";
+
+export function resetHistoryStack() {
+    if (dataState.historyStack) {
+        dataState.historyStack.clear(); 
+    } else {
+        dataState.historyStack = new Stack();
+    }
+
+    if (dataState.undidHistoryStack) {
+        dataState.undidHistoryStack.clear(); 
+    } else {
+        dataState.undidHistoryStack = new Stack();
+    }
+}
 
 export function syncFavorites() {
     saveFavorites();

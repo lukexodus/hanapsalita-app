@@ -5,5 +5,7 @@ export const dataState = $state({
     favoriteMode: false,
     favorites: null,
     undoAvailable: false,
-    redoAvailable: false
+    redoAvailable: false,
+    historyStack: null,
+    undidHistoryStack: null
 });

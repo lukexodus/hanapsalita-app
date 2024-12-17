@@ -14,6 +14,20 @@
     // States
     let isFavorite = $state(dataState.favorites && dataState.favorites.has(wordRecord.word));
 
+    function toggleIsFavoriteClosure() {
+        // Toggle component state
+        isFavorite = !isFavorite;
+
+        // Sync with universal `favorites` set state
+        if (dataState.favorites) {
+            if (isFavorite) {
+                dataState.favorites.add(wordRecord.word);
+            } else {
+                dataState.favorites.delete(wordRecord.word);
+            }
+        }
+    }
+
     function toggleIsFavorite() {
         if (dataState.favoriteMode) {
             // Toggle component state
@@ -33,9 +47,9 @@
 
             // Update history stack
             if (isFavorite) {
-                historyStack.push({op: "add", word: wordRecord.word})
+                historyStack.push({op: "add", word: wordRecord.word, toggleClosure: toggleIsFavoriteClosure})
             } else {
-                historyStack.push({op: "remove", word: wordRecord.word})
+                historyStack.push({op: "remove", word: wordRecord.word, toggleClosure: toggleIsFavoriteClosure})
             }
         }
     }
